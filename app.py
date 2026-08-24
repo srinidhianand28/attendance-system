@@ -19,3 +19,23 @@ app.config.update(SECRET_KEY="session_data")
 @app.route("/")
 def home():
     return "Attendance System" 
+
+@app.route("/register", methods=["GET","POST"])
+#routes the code to specific page and recieves & post
+def register():
+    if(request.method=="POST"):
+        email=request.form.get("email")
+        name=request.form.get("name")
+        subteam=request.form.get("subteam")
+        #gets the input from the form submitted in registration page
+        if email in worksheet.col_values(1):
+            return "You're already registered."
+        #checks for duplicate emails
+        worksheet.append_row([email,name,subteam,"Yes"])
+        session["email"]=email
+        #Adds to google sheet and stores email
+        return "Registration was successful"
+        
+    else:
+        return render_template("register.html")
+
