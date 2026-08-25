@@ -38,4 +38,14 @@ def register():
         
     else:
         return render_template("register.html")
-
+    
+@app.route("/checkin",methods=["GET","POST"]) 
+def checkin(): 
+    email=session["email"] 
+    number=random.randint(100000,999999) 
+    session["code"]=number 
+    #Generates random 6-digit session and saves in session
+    params={"subject":"verification code", "text":f"This is your verification code for today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
+    #Create verification email
+    send=resend.Emails.send(params) 
+    return render_template("checkin.html")
