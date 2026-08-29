@@ -4,6 +4,7 @@ import gspread
 import random
 import os
 import resend
+import datetime
 load_dotenv()
 API_KEY= os.getenv("RESEND_API_KEY")
 resend.api_key=API_KEY
@@ -11,6 +12,7 @@ resend.api_key=API_KEY
 connection=gspread.service_account(filename="robotics-attendance-505719-469542db1a26.json")
 spreadsheet=connection.open_by_key("1wBvikd-lND2i-rx7CW4u8vMQSOYtKxtLs3ZV_Lnhp4c")
 worksheet=spreadsheet.worksheet("Students")
+worksheet2=spreadsheet.worksheet("Attendance")
 #connects the website to the google sheet using google cloud console 
 
 app = Flask(__name__)
@@ -41,20 +43,30 @@ def register():
     
 @app.route("/checkin",methods=["GET","POST"]) 
 def checkin(): 
-    email=session["email"] 
-    number=random.randint(100000,999999) 
-    session["code"]=number 
-    #Generates random 6-digit code and saves in session
-    params={"subject":"verification code", "text":f"This is your verification code for today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
-    #Create verification email
-    send=resend.Emails.send(params) 
+    if(request.method=="POST"):
+        email=session["email"] 
+        number=random.randint(100000,999999) 
+        session["code"]=number 
+        #Generates random 6-digit code and saves in session
+        params={"subject":"verification code", "text":f"This is your verification code for today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
+        #Create verification email
+        send=resend.Emails.send(params) 
+        return render_template("checkin.html")
     return render_template("checkin.html")
 
 @app.route("/verify", methods=["GET","POST"]) 
 def verify(): 
     code=request.form.get("code") 
-    num=int(code) 
+    num=int(code)
     if (num==session["code"]): 
+        current=datetime.datetime.now()
+        row_email=worksheet.find(session["email"])
+        row=row_email.row
+        name=worksheet.cell(row,2).value
+        subteam=worksheet.cell(row,3).value
+        date=str(current.date())
+        time=str(current.time())
+        worksheet2.append_row([name,date,time,subteam])
         return "You're checked in!" 
     else: 
         return "The code is incorrect. Please try again" 
