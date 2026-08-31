@@ -74,7 +74,7 @@ def verify():
         worksheet2.append_row([email,name,date,time,"",subteam])
         return "You're checked in!" 
     else: 
-        return "The code is incorrect. Please try again" 
+        return "The code is incorrect. Please try again." 
     #adds row in attendance google sheet and/or returns messages accordingly
 
 @app.route("/checkout",methods=["GET","POST"])
@@ -84,7 +84,10 @@ def checkout():
         number=random.randint(100000,999999) 
         session["code"]=number 
         params={"subject":"Verification Code for Checkout", "text":f"This is your verification code to end today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
-        send=resend.Emails.send(params)
+        if(session["email"] in worksheet2.col_values(1)):
+            send=resend.Emails.send(params)
+        else: 
+            return "Please check in first"
         return render_template("checkout.html")
     return render_template("checkout.html")
 
@@ -100,6 +103,6 @@ def confirm():
         worksheet2.update_cell(row,5,time)
         return "You're checked out!"
     else: 
-        return "The code is incorrect. Please try again"
+        return "The code is incorrect. Please try again."
 if __name__ == "__main__": 
     app.run(debug=True)
