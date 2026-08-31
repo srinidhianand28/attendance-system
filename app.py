@@ -69,7 +69,7 @@ def verify():
         subteam=worksheet.cell(row,3).value
         #it finds the students name and subteam from students google sheet
         date=str(current.date())
-        time=str(current.time())
+        time=(current.strftime("%I:%M %p"))
         #stores current date and time in 2 individual variables
         worksheet2.append_row([email,name,date,time,"",subteam])
         return "You're checked in!" 
@@ -96,7 +96,7 @@ def confirm():
         current=datetime.datetime.now()
         row_email=worksheet2.find(session["email"])
         row=row_email.row
-        time=str(current.time())
+        time=(current.strftime("%I:%M %p"))
         worksheet2.update_cell(row,5,time)
         return "You're checked out!"
     else: 
