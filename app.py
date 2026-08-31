@@ -48,7 +48,7 @@ def checkin():
         number=random.randint(100000,999999) 
         session["code"]=number 
         #Generates random 6-digit code and saves in session
-        params={"subject":"verification code", "text":f"This is your verification code for today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
+        params={"subject":"Verification Code for Checkin", "text":f"This is your verification code for today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
         #Create verification email
         send=resend.Emails.send(params) 
         return render_template("checkin.html")
@@ -58,18 +58,48 @@ def checkin():
 def verify(): 
     code=request.form.get("code") 
     num=int(code)
+    #gets the code and converts it to integer
     if (num==session["code"]): 
         current=datetime.datetime.now()
+        #stores current date and time
         row_email=worksheet.find(session["email"])
         row=row_email.row
+        email=session["email"]
         name=worksheet.cell(row,2).value
         subteam=worksheet.cell(row,3).value
+        #it finds the students name and subteam from students google sheet
         date=str(current.date())
         time=str(current.time())
-        worksheet2.append_row([name,date,time,subteam])
+        #stores current date and time in 2 individual variables
+        worksheet2.append_row([email,name,date,time,"",subteam])
         return "You're checked in!" 
     else: 
         return "The code is incorrect. Please try again" 
+    #adds row in attendance google sheet and/or returns messages accordingly
 
+@app.route("/checkout",methods=["GET","POST"])
+def checkout():
+    if(request.method=="POST"):
+        email=session["email"]
+        number=random.randint(100000,999999) 
+        session["code"]=number 
+        params={"subject":"Verification Code for Checkout", "text":f"This is your verification code to end today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
+        send=resend.Emails.send(params)
+        return render_template("checkout.html")
+    return render_template("checkout.html")
+
+@app.route("/confirm",methods=["GET","POST"])
+def confirm():
+    code=request.form.get("code")
+    num=int(code)
+    if(num==session["code"]):
+        current=datetime.datetime.now()
+        row_email=worksheet2.find(session["email"])
+        row=row_email.row
+        time=str(current.time())
+        worksheet2.update_cell(row,5,time)
+        return "You're checked out!"
+    else: 
+        return "The code is incorrect. Please try again"
 if __name__ == "__main__": 
     app.run(debug=True)
