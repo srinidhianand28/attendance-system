@@ -9,13 +9,13 @@
     <h1>
         Welcome!
     </h1>
-    <form action="http://127.0.0.1:5000/checkin" method="post">
+    <form action="/checkin" method="post">
     <button>
         Check-In
     </button>
     </form>
-    <form action="http://127.0.0.1:5000/verify" method="post">
-        <input name="code">
+    <form action="/verify" method="post">
+        <input name="code" required placeholder="Enter verification code">
         <button>
             Verify Code
         </button>

@@ -9,13 +9,13 @@
     <h1>
         End Session
     </h1>
-    <form action="http://127.0.0.1:5000/checkout" method="post">
+    <form action="/checkout" method="post">
     <button>
         Checkout
     </button>
     </form>
-    <form action="http://127.0.0.1:5000/confirm" method="post">
-        <input name="code">
+    <form action="/confirm" method="post">
+        <input name="code" required placeholder="Enter verification code">
         <button>
             Verify Code
         </button>

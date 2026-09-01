@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect
 from dotenv import load_dotenv
 import gspread
 import random
@@ -36,7 +36,7 @@ def register():
         worksheet.append_row([email,name,subteam,"Yes"])
         session["email"]=email
         #Adds to google sheet and stores email
-        return "Registration was successful"
+        return redirect("/checkin")
         
     else:
         return render_template("register.html")
@@ -71,8 +71,14 @@ def verify():
         date=str(current.date())
         time=(current.strftime("%I:%M %p"))
         #stores current date and time in 2 individual variables
-        worksheet2.append_row([email,name,date,time,"",subteam])
-        return "You're checked in!" 
+        records=worksheet2.get_all_values() 
+        for row in records:
+            if(row[0]==session["email"] and row[2]==date and row[4]==""):
+                return "You're already checked in"
+        else:
+            worksheet2.append_row([email,name,date,time,"",subteam])
+        return redirect("/checkout")
+        #prevent duplicate check-ins
     else: 
         return "The code is incorrect. Please try again." 
     #adds row in attendance google sheet and/or returns messages accordingly
@@ -83,26 +89,48 @@ def checkout():
         email=session["email"]
         number=random.randint(100000,999999) 
         session["code"]=number 
+        #generate verification code to checkout
         params={"subject":"Verification Code for Checkout", "text":f"This is your verification code to end today's session: {number}", "to":email, "from":"onboarding@resend.dev"} 
-        if(session["email"] in worksheet2.col_values(1)):
-            send=resend.Emails.send(params)
+        #verification email to checkout
+        current=datetime.datetime.now()
+        date=str(current.date())
+        records=worksheet2.get_all_values()
+        match=False
+        for row_number,row in enumerate(records,start=1):
+            if(row[0]==session["email"] and row[2]==date and row[4]==""):
+                match=True
+                send=resend.Emails.send(params)
+                break
+        if(match==True):
+            return render_template("checkout.html")
         else: 
-            return "Please check in first"
-        return render_template("checkout.html")
+            return "Please check in first."
+        #Prevent checkout before check-in
     return render_template("checkout.html")
 
 @app.route("/confirm",methods=["GET","POST"])
 def confirm():
     code=request.form.get("code")
     num=int(code)
+    #get code and convert it to integer
     if(num==session["code"]):
         current=datetime.datetime.now()
-        row_email=worksheet2.find(session["email"])
-        row=row_email.row
-        time=(current.strftime("%I:%M %p"))
-        worksheet2.update_cell(row,5,time)
-        return "You're checked out!"
+        date=str(current.date())
+        records=worksheet2.get_all_values()
+        match=False
+        for row_number,row in enumerate(records,start=1):
+            if(row[0]==session["email"] and row[2]==date and row[4]==""):
+                match=True
+                time=(current.strftime("%I:%M %p"))
+                worksheet2.update_cell(row_number,5,time)
+                break
+        #Finds the student's attendance row for today and updates with checkout time 
+        if(match==True):
+            return redirect("/")
+        else: 
+            return "You're not currently checked in."
     else: 
         return "The code is incorrect. Please try again."
+    #Responses depending on if the student can check out
 if __name__ == "__main__": 
     app.run(debug=True)
