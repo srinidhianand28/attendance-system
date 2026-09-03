@@ -20,7 +20,7 @@ app.config.update(SECRET_KEY="session_data")
 
 @app.route("/")
 def home():
-    return "Attendance System" 
+    return render_template("home.html")
 
 @app.route("/register", methods=["GET","POST"])
 #routes the code to specific page and recieves & post
